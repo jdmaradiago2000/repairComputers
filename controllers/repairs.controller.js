@@ -42,7 +42,7 @@ const getRepairById = async (req, res) => {
 const updateRepair = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { status } = req.body;
 
     const repair = await Repair.findOne({ where: { id } });
 
@@ -52,7 +52,7 @@ const updateRepair = async (req, res) => {
         .json({ status: 'error', message: 'Repair not found given that id' });
     }
 
-    await repair.update({ name });
+    await repair.update({ status });
 
     res.status(200).json({ status: 'Success' });
   } catch (error) {
@@ -72,7 +72,7 @@ const deleteRepair = async (req, res) => {
         .json({ status: 'error', message: 'Repair not found given that id' });
     }
 
-    await repair.update({ status: 'deleted' });
+    await repair.update({ status: 'cancelled' });
 
     res.status(200).json({
       status: 'success',
