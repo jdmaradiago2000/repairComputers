@@ -1,4 +1,12 @@
 const express = require('express');
+const { body } = require('express-validator');
+
+// Middlewares
+const { repairExists } = require('../middlewares/repairs.middlewares');
+const {
+  createRepairValidations,
+  checkValidations,
+} = require('../middlewares/validations.middlewares');
 
 //Controller
 const {
@@ -12,11 +20,12 @@ const {
 const router = express.Router();
 
 router.get('/', getAllRepairs);
-router.post('/', createRepair);
+router.post('/', createRepairValidations, checkValidations, createRepair);
 router
+  .use('/:id', repairExists)
   .route('/:id')
-  .get(getRepairById)
-  .patch(updateRepair)
-  .delete(deleteRepair);
+  .get(repairExists, getRepairById)
+  .patch(repairExists, updateRepair)
+  .delete(repairExists, deleteRepair);
 
 module.exports = { repairsRouter: router };
