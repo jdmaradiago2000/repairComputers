@@ -1,4 +1,6 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
 
 //models
 const { User } = require('../models/user.model');
@@ -6,8 +8,13 @@ const { User } = require('../models/user.model');
 // Utils
 const { catchAsync } = require('../utils/catchAsync');
 
+const { AppError } = require('../utils/appError');
+dotenv.config({ path: './config.env' });
+
 const getAllUsers = catchAsync(async (req, res, next) => {
-  const users = await User.findAll({ atributes: { exclude: ['password'] } });
+  const users = await User.findAll({
+    attributes: { exclude: ['password'] },
+  });
 
   res.status(200).json({ users });
 });
@@ -27,7 +34,6 @@ const createUser = catchAsync(async (req, res, next) => {
   });
 
   newUser.password = undefined;
-
   res.status(201).json({ newUser });
 });
 
@@ -63,10 +69,36 @@ const deleteUser = catchAsync(async (req, res, next) => {
   res.status(200).json({ status: 'success' });
 });
 
+const login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({
+    where: { email, status: 'active' },
+  });
+
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return next(new AppError('Invalid credentials', 400));
+  }
+
+  const token = await jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+
+  user.password = undefined;
+
+  res.status(200).json({ token, user });
+});
+
+const checkToken = catchAsync(async (req, res, next) => {
+  res.status(200).json({ user: req.sessionUser });
+});
+
 module.exports = {
   getAllUsers,
   createUser,
   getUserById,
   updateUser,
   deleteUser,
+  login,
+  checkToken,
 };

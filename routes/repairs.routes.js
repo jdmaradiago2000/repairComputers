@@ -1,8 +1,12 @@
 const express = require('express');
-const { body } = require('express-validator');
 
 // Middlewares
 const { repairExists } = require('../middlewares/repairs.middlewares');
+const {
+  protectToken,
+  protectEmployee,
+} = require('../middlewares/users.middlewares');
+
 const {
   createRepairValidations,
   checkValidations,
@@ -11,6 +15,8 @@ const {
 //Controller
 const {
   getAllRepairs,
+  getAllCompletedRepairs,
+  getAllPendingRepairs,
   createRepair,
   getRepairById,
   updateRepair,
@@ -19,13 +25,18 @@ const {
 
 const router = express.Router();
 
-router.get('/', getAllRepairs);
 router.post('/', createRepairValidations, checkValidations, createRepair);
+
+router.use(protectToken);
+router.get('/', protectEmployee, getAllRepairs);
+router.get('/completed', protectEmployee, getAllCompletedRepairs);
+router.get('/pending', protectEmployee, getAllPendingRepairs);
+
 router
   .use('/:id', repairExists)
   .route('/:id')
-  .get(repairExists, getRepairById)
-  .patch(repairExists, updateRepair)
-  .delete(repairExists, deleteRepair);
+  .get(repairExists, protectEmployee, getRepairById)
+  .patch(repairExists, protectEmployee, updateRepair)
+  .delete(repairExists, protectEmployee, deleteRepair);
 
 module.exports = { repairsRouter: router };
